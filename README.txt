@@ -71,6 +71,10 @@ Electrolyzer-Agent ↔ Microgrid-Orchestrator
 
 The performance measurements used in the study were taken from this connection.
 
+iperf3 testing was done using the following:
+
+iperf3 -c <Microgrid-Orchestrator IP> -n 100M
+
 5. Test Scenarios
 
 The experiments were performed under three different network configurations:
@@ -79,7 +83,7 @@ The experiments were performed under three different network configurations:
 
 A duplicate of the same topology was used, but with:
 
-Standard switches
+Open vSwitches
 No SDN controller
 No QoS configuration
 
@@ -94,9 +98,15 @@ OpenFlow switches
 Flow rules configured
 No QoS configuration
 
-3. SDN Network With QoS
+3. Standard TCP/IP Network With QoS
 
-Same configuration as above, but with QoS applied using meter rules to limit bandwidth to 5 Mbit/s for the following traffic:
+A duplicate of the same topology was used, but with:
+
+Open vSwitches
+No SDN controller
+QoS configuration
+
+QoS applied using meter rules to limit bandwidth to 5 Mbit/s for the following traffic:
 
 Full-Cell-Agent ↔ Load-Agent-3
 BESS-Agent ↔ Load-Agent-5
@@ -105,4 +115,18 @@ This bandwidth limitation allows prioritization of traffic between:
 
 Electrolyzer-Agent ↔ Microgrid-Orchestrator
 
+And QoS with high pripority flow for packets sent from the Electrolyzer Agent. 
+
+4. SDN Network With QoS
+
+Same configuration as SDN without QoS, but with QoS applied using meter rules to limit bandwidth to 5 Mbit/s for the following traffic:
+
+Full-Cell-Agent ↔ Load-Agent-3
+BESS-Agent ↔ Load-Agent-5
+
+This bandwidth limitation allows prioritization of traffic between:
+
+Electrolyzer-Agent ↔ Microgrid-Orchestrator
+
+And QoS with high pripority flow for packets sent from the Electrolyzer Agent. 
 
