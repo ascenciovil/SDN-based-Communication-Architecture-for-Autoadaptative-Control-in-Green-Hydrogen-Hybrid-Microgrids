@@ -1,132 +1,187 @@
-Instructions of Use
-Repository Contents
+================================================================================
+SDN-Based Communication Architecture for Auto-Adaptive Control
+in Green Hydrogen Hybrid Microgrids
+================================================================================
 
-This repository contains the following files:
+REPOSITORY OVERVIEW
+--------------------------------------------------------------------------------
 
-ODL-QoS.gns3project – GNS3 project file containing the network topology used for testing.
-README.txt – Instructions for configuring and running the tests.
+This repository contains the simulation environment and configuration files
+associated with the research paper:
 
-The ODL-QoS.gns3project file is an importable GNS3 project where the testing environment was created. To perform your own tests, import this project into GNS3 and follow the configuration steps below.
+  "SDN-Based Communication Architecture for Auto-Adaptive Control
+   in Green Hydrogen Hybrid Microgrids"
 
-1. OpenDaylight Bridge Configuration
+The provided materials allow full reproduction of the network performance
+experiments described in the paper, using GNS3 as the network emulation
+platform and OpenDaylight (ODL) as the Software-Defined Networking (SDN)
+controller.
 
-After importing and opening the project in GNS3, open a terminal on the opendaylight-odl-1 PC and configure a bridge interface using the following commands:
+--------------------------------------------------------------------------------
+REPOSITORY CONTENTS
+--------------------------------------------------------------------------------
 
-ip link add name br0 type bridge
-ip link set br0 up
-ip link set eth0 master br0
-...
-ip link set eth10 master br0
-ip addr add 192.168.100.2/24 dev br0
+  ODL-QoS.gns3project  -  GNS3 project file containing the complete network
+                           topology used in the experimental evaluation.
 
-This bridge connects all OpenDaylight interfaces so the controller can communicate with the OpenFlow switches.
+  RTBox1.zip           -  Configuration files for Real-Time Box 1 (RTBox1).
 
-2. Install OpenDaylight Features
+  RTBox2.zip           -  Configuration files for Real-Time Box 2 (RTBox2).
 
-Open the OpenDaylight console by running:
+  README.txt           -  This file. Setup instructions and reproduction guide.
 
-/opt/opendaylight/bin/karaf
+--------------------------------------------------------------------------------
+PREREQUISITES
+--------------------------------------------------------------------------------
 
-Then install the following features in this exact order:
+Before proceeding, ensure the following software is installed on your system:
 
-odl-restconf
-odl-mdasl-apidocs
-odl-openflowplugin-flow-services
-odl-dlux-core
-odl-dluxapps-nodes
-odl-dluxapps-topology
-odl-dluxapps-yangui
-odl-dluxapps-yangvisualizer
-odl-dluxapps-yangman
+  - GNS3 (Network Emulation Platform)
+  - OpenDaylight (Karaf distribution)
+  - iperf3 (Network performance measurement tool)
 
-Installing the features in this order is important, as changing the order may produce different results from those presented in the testing.
+--------------------------------------------------------------------------------
+SETUP AND CONFIGURATION
+--------------------------------------------------------------------------------
 
-3. Flow Configuration
+Import the ODL-QoS.gns3project file into GNS3 to load the complete testing
+environment. Then follow the steps below.
 
-After installing the OpenDaylight features, configure the flow rules in the virtual switches to allow communication between the following devices:
+STEP 1 - OpenDaylight Bridge Configuration
+------------------------------------------
 
-Electrolyzer-Agent ↔ Microgrid-Orchestrator
-Full-Cell-Agent ↔ Load-Agent-3
-BESS-Agent ↔ Load-Agent-5
+After importing and opening the project in GNS3, open a terminal on the
+"opendaylight-odl-1" node and configure a bridge interface to connect all
+OpenDaylight interfaces, enabling the SDN controller to communicate with the
+OpenFlow switches:
 
-Make sure communication between these pairs is working before proceeding with testing.
+    ip link add name br0 type bridge
+    ip link set br0 up
+    ip link set eth0 master br0
+    ...
+    ip link set eth10 master br0
+    ip addr add 192.168.100.2/24 dev br0
 
+This bridge aggregates all controller-facing interfaces under a single
+logical interface (br0), which is required for proper OpenFlow communication.
 
-4. Testing Procedure
+STEP 2 - Install OpenDaylight Features
+---------------------------------------
 
-Once connectivity is established, begin the network performance tests.
+Launch the OpenDaylight Karaf console with:
 
-Step 1 – Background Traffic
+    /opt/opendaylight/bin/karaf
 
-Run iperf3 tests between:
+Then install the required features in the following exact order. The
+installation sequence is critical -- deviating from it may produce results
+inconsistent with those reported in the paper.
 
-Full-Cell-Agent ↔ Load-Agent-3
-BESS-Agent ↔ Load-Agent-5
+    feature:install odl-restconf
+    feature:install odl-mdsal-apidocs
+    feature:install odl-openflowplugin-flow-services
+    feature:install odl-dlux-core
+    feature:install odl-dluxapps-nodes
+    feature:install odl-dluxapps-topology
+    feature:install odl-dluxapps-yangui
+    feature:install odl-dluxapps-yangvisualizer
+    feature:install odl-dluxapps-yangman
 
-Step 2 – Measurement Traffic
+STEP 3 - Flow Rule Configuration
+----------------------------------
 
-Run iperf3 and ping between:
+Once OpenDaylight is running and the features are installed, configure the
+flow rules in the virtual OpenFlow switches to enable communication between
+the following agent pairs:
 
-Electrolyzer-Agent ↔ Microgrid-Orchestrator
+    Electrolyzer-Agent  <-->  Microgrid-Orchestrator
+    Full-Cell-Agent     <-->  Load-Agent-3
+    BESS-Agent          <-->  Load-Agent-5
 
-The performance measurements used in the study were taken from this connection.
+Verify that bidirectional connectivity is established between each pair
+before proceeding to the testing phase.
 
-iperf3 testing was done using the following:
+--------------------------------------------------------------------------------
+EXPERIMENTAL PROCEDURE
+--------------------------------------------------------------------------------
 
-iperf3 -c <Microgrid-Orchestrator IP> -n 100M
+The network performance tests are structured in two layers of traffic:
 
-5. Test Scenarios
+  Background Traffic
+  Establish iperf3 flows between the following pairs to simulate network load:
 
-The experiments were performed under three different network configurations:
+      Full-Cell-Agent  <-->  Load-Agent-3
+      BESS-Agent       <-->  Load-Agent-5
 
-1. Standard TCP/IP Network
+  Measurement Traffic
+  Run iperf3 and ping tests between:
 
-A duplicate of the same topology was used, but with:
+      Electrolyzer-Agent  <-->  Microgrid-Orchestrator
 
-Open vSwitches
-No SDN controller
-No QoS configuration
+  This is the critical communication path evaluated in the study.
+  Performance metrics (throughput, latency, jitter) are collected from
+  this pair.
 
-This scenario serves as the baseline network.
+  iperf3 command used for measurement:
 
-2. SDN Network Without QoS
+      iperf3 -c <Microgrid-Orchestrator IP> -n 100M
 
-The topology was used with:
+--------------------------------------------------------------------------------
+TEST SCENARIOS
+--------------------------------------------------------------------------------
 
-OpenDaylight controller
-OpenFlow switches
-Flow rules configured
-No QoS configuration
+The experiments were conducted under four distinct network configurations,
+corresponding to the scenarios described in the paper:
 
-3. Standard TCP/IP Network With QoS
+  Scenario 1 - Standard TCP/IP (Baseline)
+  ----------------------------------------
+  Network type  : Standard TCP/IP
+  Switches      : Open vSwitch
+  SDN controller: None
+  QoS           : Not configured
 
-A duplicate of the same topology was used, but with:
+  This scenario establishes the performance baseline for comparison.
 
-Open vSwitches
-No SDN controller
-QoS configuration
+  Scenario 2 - SDN Without QoS
+  ------------------------------
+  Network type  : SDN (OpenFlow)
+  Controller    : OpenDaylight
+  Switches      : OpenFlow-enabled virtual switches
+  Flow rules    : Configured
+  QoS           : Not configured
 
-QoS applied using meter rules to limit bandwidth to 5 Mbit/s for the following traffic:
+  Scenario 3 - Standard TCP/IP With QoS
+  ----------------------------------------
+  Network type  : Standard TCP/IP
+  Switches      : Open vSwitch
+  SDN controller: None
+  QoS           : Enabled (meter rules)
 
-Full-Cell-Agent ↔ Load-Agent-3
-BESS-Agent ↔ Load-Agent-5
+  Bandwidth limited to 5 Mbit/s for background traffic:
+      Full-Cell-Agent  <-->  Load-Agent-3
+      BESS-Agent       <-->  Load-Agent-5
 
-This bandwidth limitation allows prioritization of traffic between:
+  This limitation prioritizes throughput for:
+      Electrolyzer-Agent  <-->  Microgrid-Orchestrator
 
-Electrolyzer-Agent ↔ Microgrid-Orchestrator
+  High-priority flow rules applied for packets originating from
+  the Electrolyzer Agent.
 
-And QoS with high pripority flow for packets sent from the Electrolyzer Agent. 
+  Scenario 4 - SDN With QoS
+  ---------------------------
+  Network type  : SDN (OpenFlow)
+  Controller    : OpenDaylight
+  Switches      : OpenFlow-enabled virtual switches
+  Flow rules    : Configured
+  QoS           : Enabled (meter rules)
 
-4. SDN Network With QoS
+  Bandwidth limited to 5 Mbit/s for background traffic:
+      Full-Cell-Agent  <-->  Load-Agent-3
+      BESS-Agent       <-->  Load-Agent-5
 
-Same configuration as SDN without QoS, but with QoS applied using meter rules to limit bandwidth to 5 Mbit/s for the following traffic:
+  Traffic prioritization active for:
+      Electrolyzer-Agent  <-->  Microgrid-Orchestrator
 
-Full-Cell-Agent ↔ Load-Agent-3
-BESS-Agent ↔ Load-Agent-5
+  High-priority flow rules applied for packets originating from
+  the Electrolyzer Agent.
 
-This bandwidth limitation allows prioritization of traffic between:
-
-Electrolyzer-Agent ↔ Microgrid-Orchestrator
-
-And QoS with high pripority flow for packets sent from the Electrolyzer Agent. 
-
+================================================================================
